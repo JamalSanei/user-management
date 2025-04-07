@@ -1,12 +1,13 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+
 import { UserCreateDto } from './dto/user-create.dto';
 import * as bcrypt from 'bcrypt';
 import { UserLoginDto } from './dto/user-login.dto';
 import { UserUpdateDto } from './dto/user-update.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async signup(newUser: UserCreateDto) {
     try {
@@ -20,8 +21,7 @@ export class UserService {
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }
-      const resultCreate = await this.prisma.user.create({ data: newUser });
-      return resultCreate;
+      return await this.prisma.user.create({ data: newUser });
     } catch (error) {
       console.log(error);
     }
@@ -31,7 +31,7 @@ export class UserService {
     try {
       const user = await this.prisma.user.findUnique({
         where: {
-          userName: data.username,
+          username: data.username,
         },
       });
 
@@ -53,6 +53,29 @@ export class UserService {
       } else {
         throw new HttpException('user not found', HttpStatus.BAD_REQUEST);
       }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async findUserByUsername(username: string) {
+    try {
+      return await this.prisma.user.findUnique({
+        where: {
+          username,
+        },
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  async getUsers() {
+    try {
+      return await this.prisma.user.findMany({
+        where: {
+          isDeleted: false,
+        },
+      });
     } catch (error) {
       console.log(error);
     }
