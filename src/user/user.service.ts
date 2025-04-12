@@ -1,10 +1,13 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-
-import { UserCreateDto } from './dto/user-create.dto';
+import { UserCreateDto } from './dtos/user-create.dto';
 import * as bcrypt from 'bcrypt';
-import { UserLoginDto } from './dto/user-login.dto';
-import { UserUpdateDto } from './dto/user-update.dto';
+import { UserLoginDto } from './dtos/user-login.dto';
+import { UserUpdateDto } from './dtos/user-update.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { PaginationDto } from 'src/common/interfaces/pagination.interface';
+import { UserPagination } from './types/user-pagination.type';
+import { userPaginationSelectFields } from './selects/pagination-select';
+
 @Injectable()
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
@@ -115,6 +118,24 @@ export class UserService {
       return await bcrypt.hash(password, 10);
     } catch (error) {
       console.log(error);
+    }
+  }
+
+  async getAll(pagination: PaginationDto): Promise<UserPagination[] | []> {
+    try {
+      const result = await this.prisma.user.findMany({
+        skip: pagination.page * pagination.limit,
+        take: pagination.limit,
+        select: userPaginationSelectFields.select,
+      });
+
+      return result ? result : [];
+    } catch (error) {
+      console.log(`[Error]: ${error} `);
+      throw new HttpException(
+        'internal service error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }
