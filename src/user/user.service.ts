@@ -30,37 +30,6 @@ export class UserService {
     }
   }
 
-  async signIn(data: UserLoginDto) {
-    try {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          username: data.username,
-        },
-      });
-
-      if (user) {
-        const isPasswordMatched = await bcrypt.compare(
-          data.password,
-          user.password,
-        );
-
-        if (isPasswordMatched) {
-          // TODO: return jwt token
-          return true;
-        } else {
-          throw new HttpException(
-            'password not matched',
-            HttpStatus.BAD_REQUEST,
-          );
-        }
-      } else {
-        throw new HttpException('user not found', HttpStatus.BAD_REQUEST);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
   async findUserByUsername(username: string) {
     try {
       return await this.prisma.user.findUnique({
@@ -72,11 +41,12 @@ export class UserService {
       console.log(error);
     }
   }
-  async getUsers() {
+
+  async findOneById(id: string) {
     try {
-      return await this.prisma.user.findMany({
+      return await this.prisma.user.findUnique({
         where: {
-          isDeleted: false,
+          id,
         },
       });
     } catch (error) {
@@ -124,6 +94,7 @@ export class UserService {
   async getAll(pagination: PaginationDto): Promise<UserPagination[] | []> {
     try {
       const result = await this.prisma.user.findMany({
+        where: { isDeleted: false },
         skip: pagination.page * pagination.limit,
         take: pagination.limit,
         select: userPaginationSelectFields.select,

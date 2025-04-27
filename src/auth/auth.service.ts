@@ -3,6 +3,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -10,6 +11,8 @@ import { AccessToken } from './types/access-token.type';
 import { UserService } from 'src/user/user.service';
 import { RegisterRequestDto } from './dtos/register-request.dto';
 import { User } from '@prisma/client';
+import { ROLES } from 'src/common/enums/role-enum';
+import { CurrentUser } from './types/current-user.type';
 
 @Injectable()
 export class AuthService {
@@ -32,7 +35,7 @@ export class AuthService {
   }
 
   async login(user: User): Promise<AccessToken> {
-    const payload = { email: user.email, id: user.id };
+    const payload = { email: user.email, id: user.id, role: user.role };
     return { access_token: this.jwtService.sign(payload) };
   }
 
@@ -44,6 +47,8 @@ export class AuthService {
       throw new BadRequestException('email already exists');
     }
 
+    userData.role = userData.role ?? ROLES.user;
+
     const userRegistered = await this.usersService.signup(userData);
     if (userRegistered) return this.login(userRegistered);
     else
@@ -51,5 +56,15 @@ export class AuthService {
         'process user registered have be error ',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+  }
+
+  async validateJwtUser(userId: string) {
+    const user = await this.usersService.findOneById(userId);
+
+    if (!user) throw new UnauthorizedException('user not found!');
+
+    const currentUser: CurrentUser = { id: user.id, role: user.role };
+
+    return currentUser;
   }
 }
