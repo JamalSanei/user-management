@@ -3,6 +3,7 @@ import {
   Get,
   HttpException,
   HttpStatus,
+  Logger,
   Query,
   Request,
   UseGuards,
@@ -19,6 +20,8 @@ import { RolesGuard } from 'src/auth/gurads/roles/roles.guard';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  private readonly logger = new Logger(UserController.name);
+
   @Roles(ROLES.admin)
   @UseGuards(RolesGuard)
   @UseGuards(AuthGuard('jwt'))
@@ -28,10 +31,10 @@ export class UserController {
     @Request() req: any,
   ) {
     try {
-      console.log(req.user);
+      this.logger.log(req.user);
       return await this.userService.getAll(paginationDto);
     } catch (error) {
-      console.log(error);
+      this.logger.log(error);
       throw new HttpException('bad request', HttpStatus.BAD_REQUEST);
     }
   }
