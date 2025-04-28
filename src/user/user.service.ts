@@ -1,7 +1,6 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { UserCreateDto } from './dtos/user-create.dto';
 import * as bcrypt from 'bcrypt';
-import { UserLoginDto } from './dtos/user-login.dto';
 import { UserUpdateDto } from './dtos/user-update.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PaginationDto } from 'src/common/interfaces/pagination.interface';
@@ -11,6 +10,8 @@ import { userPaginationSelectFields } from './selects/pagination-select';
 @Injectable()
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private readonly logger = new Logger(UserService.name);
 
   async signup(newUser: UserCreateDto) {
     try {
@@ -26,7 +27,7 @@ export class UserService {
       }
       return await this.prisma.user.create({ data: newUser });
     } catch (error) {
-      console.log(error);
+      this.logger.log(error);
     }
   }
 
@@ -38,7 +39,7 @@ export class UserService {
         },
       });
     } catch (error) {
-      console.log(error);
+      this.logger.log(error);
     }
   }
 
@@ -50,7 +51,7 @@ export class UserService {
         },
       });
     } catch (error) {
-      console.log(error);
+      this.logger.log(error);
     }
   }
 
@@ -65,7 +66,7 @@ export class UserService {
         data: data,
       });
     } catch (error) {
-      console.log(error);
+      this.logger.log(error);
     }
   }
   // MID: define return type
@@ -79,7 +80,7 @@ export class UserService {
       });
       return true;
     } catch (error) {
-      console.log(error);
+      this.logger.log(error);
     }
   }
   // MID: define return type
@@ -87,7 +88,7 @@ export class UserService {
     try {
       return await bcrypt.hash(password, 10);
     } catch (error) {
-      console.log(error);
+      this.logger.log(error);
     }
   }
 
@@ -102,7 +103,7 @@ export class UserService {
 
       return result ? result : [];
     } catch (error) {
-      console.log(`[Error]: ${error} `);
+      this.logger.log(`[Error]: ${error} `);
       throw new HttpException(
         'internal service error',
         HttpStatus.INTERNAL_SERVER_ERROR,

@@ -3,5 +3,5 @@ import { UserRole } from '@prisma/client';
 
 export type CurrentUser = {
   id: string;
-  role: UserRole[];
+  roles: UserRole[];
 };
