@@ -1,0 +1,30 @@
+# ====================== BUILD STAGE ======================
+FROM node:18 AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+
+# Prisma generate before running app
+RUN npx prisma generate  --schema prisma/schema.prisma
+
+RUN npm run build
+
+# ====================== PRODUCTION STAGE ======================
+FROM node:18-slim AS production
+
+WORKDIR /app
+
+
+COPY package*.json ./
+RUN npm install --only=production
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+# COPY --from=builder /app/prisma ./prisma
+
+CMD ["npm", "run", "start:prod"]
