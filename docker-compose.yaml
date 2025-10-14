@@ -1,0 +1,77 @@
+version: '3.8'
+# this is nginx container 1
+services:
+  ############################################ backend
+  nest-backend:
+    container_name: user-management-back-end
+
+    build:
+      dockerfile: Dockerfile
+      context: .
+
+    ports:
+      - 3000:3000
+
+    environment:
+      - DATABASE_URL=postgresql://postgres:<USERNAME>@<PASSWORD>:<PORT>/<DB-NAME>?schema=public
+      - JWT_SECRET=<JWT KEY>
+      - ACCESS_TOKEN_VALIDITY_DURATION_IN_SEC=7d
+
+    networks:
+      - backend_network
+
+    volumes:
+      - .:/usr/src/app
+
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  ############################################ postgres
+  postgres:
+    image: postgres:16
+
+    container_name: postgres-db
+
+    networks:
+      - backend_network
+
+    ports:
+      - 5433:5432
+
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=user_management
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    restart: unless-stopped
+
+  ############################################ nginx
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    restart: always
+
+    networks:
+      - backend_network
+
+    ports:
+      - 80:80
+
+    volumes:
+      - ./nginx-default.conf.template:/etc/nginx/templates/default.conf.template
+
+    depends_on:
+      - nest-backend
+
+networks:
+  backend_network:
+    driver: bridge
+
+volumes:
+  postgres_data: {}
